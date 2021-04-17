@@ -18,7 +18,7 @@ int read_len(FILE *file, int length, char c) {
                 printf("%02x ", buffer[i]);
         ret = size;
     } else {
-        printf("Expected %d, read: %d", length, size);
+        printf("Expected %d, read: %ld", length, size);
         ret = -3;
     }
     free(buffer);

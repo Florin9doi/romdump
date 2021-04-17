@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
         if (buffer[0] == 0x14 && buffer[6] == 0x00) {
             uint32_t offset = buffer[1] <<8*3 | buffer[2] << 8*2 | buffer[3] << 8*1 | buffer[4];
             uint32_t length = buffer[7] << 8*1 | buffer[8];
-            printf("src %04x; offset %08x; length: %04x\n", ftell(fp_in)-header_size, offset, length);
+            printf("src %04lx; offset %08x; length: %04x\n", ftell(fp_in)-header_size, offset, length);
 
             if (fp_out == NULL) {
                 free(buffer);
