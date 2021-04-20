@@ -73,28 +73,28 @@ exit:
 }
 
 int main(int argc, char **argv) {
-	FILE *fp_in = NULL, *fp_out = NULL;
-	fp_in  = fopen((argc > 1) ? argv[1] : "NHL105530.c1", "rb");
+	FILE *fp_mcu = NULL, *fp_out = NULL;
+	fp_mcu  = fopen((argc > 1) ? argv[1] : "NHL105530.c1", "rb");
 	fp_out = fopen((argc > 2) ? argv[2] : NULL, "wb");
 	//oout = fopen("DUMMY", "wb");
 
     uint32_t size_out = 0;
 
-	if (fp_in == NULL)
+	if (fp_mcu == NULL)
         exit(EXIT_FAILURE);
 
     printf("FileID:\t\t");
-    if (read8(fp_in) != 0xA2)
+    if (read8(fp_mcu) != 0xA2)
         goto exit;
 
     uint32_t header_size = 0;
     printf("\nHeader size:\t");
-    if ((header_size = read32(fp_in)) <= 0)
+    if ((header_size = read32(fp_mcu)) <= 0)
         goto exit;
 
     uint32_t tokens = 0;
     printf("\nTokens:\t\t");
-    if ((tokens = read32(fp_in)) <= 0)
+    if ((tokens = read32(fp_mcu)) <= 0)
         goto exit;
 
     int i = 0;
@@ -102,25 +102,25 @@ int main(int argc, char **argv) {
         printf("\nToken[%x]:\t", i);
 
         uint8_t token_type = 0;
-        if ((token_type = read8(fp_in)) <= 0)
+        if ((token_type = read8(fp_mcu)) <= 0)
             goto exit;
         printf("len=");
 
         uint8_t token_size = 0;
-        if ((token_size = read8(fp_in)) <= 0)
+        if ((token_size = read8(fp_mcu)) <= 0)
             goto exit;
 
         switch (token_type) {
             case 0xc2:
             case 0xc3:
                 printf("section [ ");
-                if (read_len(fp_in, token_size, 'c') < 0)
+                if (read_len(fp_mcu, token_size, 'c') < 0)
                     goto exit;
                 printf("]");
                 break;
             case 0xd3:
                 printf("signature [ ");
-                if (read_len(fp_in, token_size, 'x') < 0)
+                if (read_len(fp_mcu, token_size, 'x') < 0)
                     goto exit;
                 printf("]");
                 break;
@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
                 printf("supportedIds [ ");
                 int supId = 0;
                 for (supId = 0; supId < token_size; supId += 2) {
-                    if (read16(fp_in) <= 0)
+                    if (read16(fp_mcu) <= 0)
                         goto exit;
                     printf(" ");
                 }
@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
                 printf("areas [ ");
                 int area = 0;
                 for (area = 0; area < token_size; area += 4) {
-                    uint32_t sz = read32(fp_in);
+                    uint32_t sz = read32(fp_mcu);
                     if (sz > size_out)
                         size_out = sz;
 
@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
                 break;
             default:
                 printf("[ ");
-                if (read_len(fp_in, token_size, 'x') < 0)
+                if (read_len(fp_mcu, token_size, 'x') < 0)
                     goto exit;
                 printf("]");
                 break;
@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
     }
 
     printf("\n");
-    if (search_data(fp_in))
+    if (search_data(fp_mcu))
         goto exit;
 
     do {
@@ -169,7 +169,7 @@ int main(int argc, char **argv) {
             goto exit;
         }
 
-        size_t size = fread(buffer, 1, header_size, fp_in);
+        size_t size = fread(buffer, 1, header_size, fp_mcu);
         if (size < header_size) {
             free(buffer);
             goto exit;
@@ -178,11 +178,11 @@ int main(int argc, char **argv) {
         if (buffer[0] == 0x14 && buffer[6] == 0x00) {
             uint32_t offset = buffer[1] <<8*3 | buffer[2] << 8*2 | buffer[3] << 8*1 | buffer[4];
             uint32_t length = buffer[7] << 8*1 | buffer[8];
-            printf("src %04lx; offset %08x; length: %04x\n", ftell(fp_in)-header_size, offset, length);
+            printf("src %04lx; offset %08x; length: %04x\n", ftell(fp_mcu)-header_size, offset, length);
 
             if (fp_out == NULL) {
                 free(buffer);
-                fseek(fp_in, length, SEEK_CUR);
+                fseek(fp_mcu, length, SEEK_CUR);
                 continue;
             }
 
@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
             }
 
             // read data
-            if (fread(data, 1, length, fp_in) < length) {
+            if (fread(data, 1, length, fp_mcu) < length) {
                 free(buffer);
                 free(data);
                 goto exit;
@@ -217,7 +217,7 @@ int main(int argc, char **argv) {
             free(data);
             free(buffer);
         } else {
-            if (search_data(fp_in)) {
+            if (search_data(fp_mcu)) {
                 free(buffer);
                 goto exit;
             }
@@ -229,7 +229,7 @@ exit:
 
 	if(fp_out)
 		fclose(fp_out);
-	if(fp_in)
-		fclose(fp_in);
+	if(fp_mcu)
+		fclose(fp_mcu);
 	exit(EXIT_SUCCESS);
 }
